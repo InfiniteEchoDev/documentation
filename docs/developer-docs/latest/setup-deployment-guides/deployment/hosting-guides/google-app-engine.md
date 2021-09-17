@@ -259,3 +259,34 @@ module.exports = {
   },
 };
 ```
+
+**Setting up connection pooling**
+
+If your database is set up on a 0.6gb `db-f1-micro` instance the maximum number of connections (`max_connections`) that are allowed to the database is 25. 6 of those are reserved for Cloud SQL internal operations so only 19 are available to your Strapi application.  (See Cloud SQL's [Postgres quotas](https://cloud.google.com/sql/docs/postgres/quotas) for more info.)
+
+You may run into an error in the logs that says something like:
+
+`Error: remaining connection slots are reserved for non-replication superuser connections. sorry, too many clients already`
+
+If so, you can set your database connection to use connection pooling to attempt to ensure that the 19 connection limit is never exceeded.  Note the pool option in Strapi's [database configuration](https://strapi.io/documentation/developer-docs/latest/setup-deployment-guides/configurations.html#database).
+
+Change:
+
+`Path: ./config/env/production/database.js`
+
+```js
+      options: {},
+```
+
+to
+
+```js
+      options: {
+        pool: {
+          min: 0,
+          max: 19,
+        },
+      },
+```
+
+Sometimes, however, 19 connections may not be enough for Strapi to function and your application will still receive the above error.  In that case, moving to the `db-g1-small` instance configuration with 1.7gb of memory (or above) may be necessary in order to increase your `max_connections` to 50 (or above).
